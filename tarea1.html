@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reconocimiento imágenes</title>
+
+  <!-- CDN para gestión de objetos -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+
+  <!-- CDN para ML -->
+  <script src="https://unpkg.com/ml5@1/dist/ml5.min.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .thumbnails {
+      display: flex;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .thumbnail {
+      margin: 0 10px;
+      cursor: pointer;
+    }
+
+    .thumbnail img {
+      width: 100px;
+      height: 100px;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      transition: transform 0.3s;
+    }
+
+    .thumbnail img:hover {
+      transform: scale(1.1);
+    }
+
+    #largeImage {
+      margin-top: 20px;
+      max-width: 600px;
+      max-height: 400px;
+      display: block;
+    }
+
+    #description {
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      width: 80%;
+      text-align: center;
+    }
+
+    #confidence-bar {
+      width: 80%;
+      height: 20px;
+      margin-top: 10px;
+      border-radius: 10px;
+      background-color: #e0e0e0;
+      position: relative;
+    }
+
+    #confidence-bar div {
+      height: 100%;
+      border-radius: 10px;
+    }
+
+    #confidence-text {
+      position: absolute;
+      top: 2px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: white;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="thumbnails">
+    <div class="thumbnail" onclick="changeImage('animal-01.jpg')">
+      <img src="images/animal-01.jpg" alt="Animal 1">
+    </div>
+    <div class="thumbnail" onclick="changeImage('animal-02.jpg')">
+      <img src="images/animal-02.jpg" alt="Animal 2">
+    </div>
+    <div class="thumbnail" onclick="changeImage('animal-03.jpg')">
+      <img src="images/animal-03.jpg" alt="Animal 3">
+    </div>
+  </div>
+
+  <div id="largeImageContainer">
+    <img id="largeImage" src="images/animal-01.jpg" alt="Animal Image">
+  </div>
+
+  <div id="description">Selecciona una imagen para ver la descripción</div>
+
+  <div id="confidence-bar">
+    <div id="confidence-level" style="width: 0%; background-color: #4caf50;">
+      <span id="confidence-text">Confianza: 0%</span>
+    </div>
+  </div>
+
+  <script>
+    // Inicialización de objetos
+    let classifier;
+    let img;
+    let etiqueta = "";
+    let confianza = 0.0;
+    let currentImage = "animal-01.jpg";  // Imagen inicial
+
+    // Cargar el modelo preentrenado
+    function preload(){
+      classifier = ml5.imageClassifier("MobileNet");
+      loadImage(currentImage);
+    }
+
+    // Crear el canvas y empezar el proceso de clasificación
+    function setup(){
+      createCanvas(600, 400);
+      classifyImage(currentImage);
+    }
+
+    // Cambiar la imagen cuando se hace clic en una miniatura
+    function changeImage(imageName) {
+      currentImage = imageName;
+      document.getElementById("largeImage").src = `images/${imageName}`;
+      classifyImage(imageName);
+    }
+
+    // Clasificar la imagen seleccionada
+    function classifyImage(imageName) {
+      img = loadImage(`images/${imageName}`, () => {
+        classifier.classify(img, gotResult);
+      });
+    }
+
+    // Procesar el resultado del modelo
+    function gotResult(results) {
+      console.log(results);
+
+      const porcentaje = (results[0].confidence * 100).toFixed(2);
+      etiqueta = "Animal: " + results[0].label;
+      confianza = porcentaje;
+
+      // Actualizar la descripción
+      document.getElementById("description").innerText = `${etiqueta}`;
+
+      // Actualizar el nivel de confianza
+      document.getElementById("confidence-text").innerText = `Confianza: ${confianza}%`;
+      document.getElementById("confidence-level").style.width = `${confianza}%`;
+
+      // Reajustar el canvas y volver a dibujar
+      image(img, 0, 0, width, height);
+    }
+
+    // Función de inicialización de la página
+    window.onload = function() {
+      preload();
+      setup();
+    }
+  </script>
+
+</body>
+</html>

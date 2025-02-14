@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teachable Machine Image Model - p5.js and ml5.js</title>
+    <!-- CDN para gestión de objetos -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+
+    <!-- CDN para ML -->
+    <script src="https://cdn.jsdelivr.net/npm/ml5@0.12/dist/ml5.min.js"></script>
+</head>
+<body>
+    <!-- Contenedor de la barra lateral -->
+    <div id="sidebar" style="position: absolute; top: 20px; left: 20px; width: 320px; height: 160px; background-color: rgba(0, 0, 0, 0.7); padding: 10px; color: white;">
+        <div id="barA" class="bar-container">
+            <span id="barLabelA">Loading...</span>
+            <div id="progressBarA" class="progress-bar"></div>
+        </div>
+        <div id="barB" class="bar-container">
+            <span id="barLabelB">Loading...</span>
+            <div id="progressBarB" class="progress-bar"></div>
+        </div>
+        <div id="barC" class="bar-container">
+            <span id="barLabelC">Loading...</span>
+            <div id="progressBarC" class="progress-bar"></div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        // Classifier Variable
+        let classifier;
+        // Model URL
+        let imageModelURL = "./models/";
+
+        // Video
+        let video;
+        let flippedVideo;
+        // To store the classification results
+        let results = [];
+
+        // Load the model first
+        function preload() {
+            classifier = ml5.imageClassifier(imageModelURL + 'model.json');
+        }
+
+        function setup() {
+            createCanvas(320, 240);
+            // Create the video capture
+            video = createCapture(VIDEO);
+            video.size(320, 240);
+            video.hide();
+
+            flippedVideo = ml5.flipImage(video);
+            // Start classifying
+            classifyVideo();
+        }
+
+        function draw() {
+            background(0);
+            // Draw the video
+            image(flippedVideo, 0, 0);
+
+            // Display the top three predictions
+            displayResults();
+        }
+
+        // Get a prediction for the current video frame
+        function classifyVideo() {
+            flippedVideo = ml5.flipImage(video);
+            classifier.classify(flippedVideo, gotResult);
+            flippedVideo.remove();
+        }
+
+        // When we get a result
+        function gotResult(error, resultsArray) {
+            // If there is an error
+            if (error) {
+                console.error(error);
+                return;
+            }
+            // Save the results
+            results = resultsArray;
+
+            // Classify again!
+            classifyVideo();
+        }
+
+        // Function to display results
+        function displayResults() {
+            // If there are results, update the display
+            if (results.length > 0) {
+                // Update the progress bars with the labels from the results
+                updateProgressBar("barA", results[0] ? results[0].confidence : 0, results[0] ? results[0].label : "N/A");
+                updateProgressBar("barB", results[1] ? results[1].confidence : 0, results[1] ? results[1].label : "N/A");
+                updateProgressBar("barC", results[2] ? results[2].confidence : 0, results[2] ? results[2].label : "N/A");
+            }
+        }
+
+        // Function to update the progress bars
+        function updateProgressBar(barId, confidence, label) {
+            const bar = document.getElementById(barId);
+            const labelElement = document.getElementById('barLabel' + barId.charAt(barId.length - 1));
+            
+            bar.style.width = Math.round(confidence * 100) + "%";
+            bar.style.backgroundColor = "green";
+            labelElement.innerText = label;
+        }
+    </script>
+
+    <style>
+        .bar-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            height: 20px;
+            background-color: grey;
+            width: 0;
+            transition: width 0.5s ease-in-out;
+        }
+
+        .bar-container span {
+            width: 80px;
+            margin-right: 10px;
+        }
+    </style>
+</body>
+</html>
