@@ -11,19 +11,34 @@
     <script src="https://cdn.jsdelivr.net/npm/ml5@0.12/dist/ml5.min.js"></script>
 </head>
 <body>
-    <!-- Contenedor de la barra lateral -->
-    <div id="sidebar" style="position: absolute; top: 20px; left: 20px; width: 320px; height: 160px; background-color: rgba(0, 0, 0, 0.7); padding: 10px; color: white;">
+    <!-- Contenedor de la barra lateral alineado a la cámara -->
+    <div id="sidebar" style="position: absolute; top: 260px; left: 1; width: 300px; background-color: rgba(0, 0, 0, 0.7); padding: 10px; color: white;">
         <div id="barA" class="bar-container">
-            <span id="barLabelA">Loading...</span>
-            <div id="progressBarA" class="progress-bar"></div>
+            <div style="flex: 1;">
+                <span id="barLabelA">Loading...</span>
+            </div>
+            <div style="flex: 2; display: flex; align-items: center;">
+                <div id="progressBarA" class="progress-bar"></div>
+                <span id="percentageA" style="margin-left: 10px;">0%</span>
+            </div>
         </div>
         <div id="barB" class="bar-container">
-            <span id="barLabelB">Loading...</span>
-            <div id="progressBarB" class="progress-bar"></div>
+            <div style="flex: 1;">
+                <span id="barLabelB">Loading...</span>
+            </div>
+            <div style="flex: 2; display: flex; align-items: center;">
+                <div id="progressBarB" class="progress-bar"></div>
+                <span id="percentageB" style="margin-left: 10px;">0%</span>
+            </div>
         </div>
         <div id="barC" class="bar-container">
-            <span id="barLabelC">Loading...</span>
-            <div id="progressBarC" class="progress-bar"></div>
+            <div style="flex: 1;">
+                <span id="barLabelC">Loading...</span>
+            </div>
+            <div style="flex: 2; display: flex; align-items: center;">
+                <div id="progressBarC" class="progress-bar"></div>
+                <span id="percentageC" style="margin-left: 10px;">0%</span>
+            </div>
         </div>
     </div>
 
@@ -90,21 +105,26 @@
         function displayResults() {
             // If there are results, update the display
             if (results.length > 0) {
-                // Update the progress bars with the labels from the results
-                updateProgressBar("barA", results[0] ? results[0].confidence : 0, results[0] ? results[0].label : "N/A");
-                updateProgressBar("barB", results[1] ? results[1].confidence : 0, results[1] ? results[1].label : "N/A");
-                updateProgressBar("barC", results[2] ? results[2].confidence : 0, results[2] ? results[2].label : "N/A");
+                // Update the progress bars with the labels and percentages from the results
+                updateProgressBar("barA", results[0] ? results[0].confidence : 0, results[0] ? results[0].label : "N/A", "percentageA");
+                updateProgressBar("barB", results[1] ? results[1].confidence : 0, results[1] ? results[1].label : "N/A", "percentageB");
+                updateProgressBar("barC", results[2] ? results[2].confidence : 0, results[2] ? results[2].label : "N/A", "percentageC");
             }
         }
 
-        // Function to update the progress bars
-        function updateProgressBar(barId, confidence, label) {
+        // Function to update the progress bars and display percentages
+        function updateProgressBar(barId, confidence, label, percentageId) {
             const bar = document.getElementById(barId);
             const labelElement = document.getElementById('barLabel' + barId.charAt(barId.length - 1));
+            const percentageElement = document.getElementById(percentageId);
             
+            // Update width and color of the progress bar
             bar.style.width = Math.round(confidence * 100) + "%";
             bar.style.backgroundColor = "green";
+            
+            // Update label and percentage text
             labelElement.innerText = label;
+            percentageElement.innerText = Math.round(confidence * 100) + "%";
         }
     </script>
 
@@ -123,8 +143,13 @@
         }
 
         .bar-container span {
-            width: 80px;
+            width: 80px;  /* Reduced width of the label container */
             margin-right: 10px;
+        }
+
+        .bar-container #percentageA, .bar-container #percentageB, .bar-container #percentageC {
+            margin-left: 10px;
+            color: lightgreen;
         }
     </style>
 </body>
