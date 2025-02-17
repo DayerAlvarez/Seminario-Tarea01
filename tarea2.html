@@ -1,156 +1,189 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Teachable Machine Image Model - p5.js and ml5.js</title>
-    <!-- CDN para gestión de objetos -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+  <meta charset="UTF-8" />
+  <title>Teachable Machine Image Model - p5.js y ml5.js</title>
+  <!-- Ajuste para que sea responsive en diferentes dispositivos -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- CDN para ML -->
-    <script src="https://cdn.jsdelivr.net/npm/ml5@0.12/dist/ml5.min.js"></script>
+  <!-- CDN de p5.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.4/p5.min.js"></script>
+  <!-- CDN de ml5.js -->
+  <script src="https://cdn.jsdelivr.net/npm/ml5@0.12/dist/ml5.min.js"></script>
+
+  <style>
+    /* Estilos generales para centrar contenido y dar fondo */
+    body {
+      margin: 0;
+      padding: 0;
+      background-color: #2c2c2c;
+      color: #ffffff;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+    }
+
+    /* Contenedor para el canvas (video) */
+    #videoContainer {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    /* Contenedor de resultados (barras) */
+    #resultsContainer {
+      width: 340px; /* Un poco más ancho que el canvas para margen */
+      margin-top: 20px;
+    }
+
+    .bar-container {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    /* Etiqueta (label) al inicio de cada barra */
+    .bar-container .label {
+      width: 80px;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+
+    /* La barra de color que muestra la confianza */
+    .progress-bar {
+      flex: 1;
+      height: 20px;
+      background-color: grey;
+      transition: width 0.5s ease-in-out;
+      border-radius: 4px;
+    }
+
+    /* El porcentaje que aparece a la derecha de la barra */
+    .percentage {
+      width: 50px;
+      margin-left: 10px;
+      text-align: right;
+      color: lightgreen;
+    }
+  </style>
 </head>
+
 <body>
-    <!-- Contenedor de la barra lateral alineado a la cámara -->
-    <div id="sidebar" style="position: absolute; top: 260px; left: 1; width: 300px; background-color: rgba(0, 0, 0, 0.7); padding: 10px; color: white;">
-        <div id="barA" class="bar-container">
-            <div style="flex: 1;">
-                <span id="barLabelA">Loading...</span>
-            </div>
-            <div style="flex: 2; display: flex; align-items: center;">
-                <div id="progressBarA" class="progress-bar"></div>
-                <span id="percentageA" style="margin-left: 10px;">0%</span>
-            </div>
-        </div>
-        <div id="barB" class="bar-container">
-            <div style="flex: 1;">
-                <span id="barLabelB">Loading...</span>
-            </div>
-            <div style="flex: 2; display: flex; align-items: center;">
-                <div id="progressBarB" class="progress-bar"></div>
-                <span id="percentageB" style="margin-left: 10px;">0%</span>
-            </div>
-        </div>
-        <div id="barC" class="bar-container">
-            <div style="flex: 1;">
-                <span id="barLabelC">Loading...</span>
-            </div>
-            <div style="flex: 2; display: flex; align-items: center;">
-                <div id="progressBarC" class="progress-bar"></div>
-                <span id="percentageC" style="margin-left: 10px;">0%</span>
-            </div>
-        </div>
+  <!-- Contenedor del video (canvas) -->
+  <div id="videoContainer">
+    <!-- El canvas se creará con p5.js -->
+  </div>
+
+  <!-- Contenedor donde se muestran los resultados con barras de progreso -->
+  <div id="resultsContainer">
+    <!-- Primera predicción -->
+    <div class="bar-container">
+      <span id="barLabelA" class="label">Cargando...</span>
+      <div id="progressBarA" class="progress-bar"></div>
+      <span id="percentageA" class="percentage">0%</span>
     </div>
+    <!-- Segunda predicción -->
+    <div class="bar-container">
+      <span id="barLabelB" class="label">Cargando...</span>
+      <div id="progressBarB" class="progress-bar"></div>
+      <span id="percentageB" class="percentage">0%</span>
+    </div>
+    <!-- Tercera predicción -->
+    <div class="bar-container">
+      <span id="barLabelC" class="label">Cargando...</span>
+      <div id="progressBarC" class="progress-bar"></div>
+      <span id="percentageC" class="percentage">0%</span>
+    </div>
+  </div>
 
-    <script type="text/javascript">
-        // Classifier Variable
-        let classifier;
-        // Model URL
-        let imageModelURL = "./models/";
+  <script>
+    // Variable para el clasificador
+    let classifier;
+    // URL del modelo (carpeta con los archivos de Teachable Machine)
+    let imageModelURL = "./models/";
 
-        // Video
-        let video;
-        let flippedVideo;
-        // To store the classification results
-        let results = [];
+    // Variables de video y resultados
+    let video;
+    let flippedVideo; // Para voltear la imagen en modo espejo
+    let results = [];
 
-        // Load the model first
-        function preload() {
-            classifier = ml5.imageClassifier(imageModelURL + 'model.json');
-        }
+    // Cargamos el modelo primero (p5.js llamará a preload antes de setup)
+    function preload() {
+      classifier = ml5.imageClassifier(imageModelURL + "model.json");
+    }
 
-        function setup() {
-            createCanvas(320, 240);
-            // Create the video capture
-            video = createCapture(VIDEO);
-            video.size(320, 240);
-            video.hide();
+    function setup() {
+      // Creamos el lienzo (canvas) dentro de #videoContainer con createCanvas()
+      let canvas = createCanvas(320, 240);
+      canvas.parent("videoContainer");
 
-            flippedVideo = ml5.flipImage(video);
-            // Start classifying
-            classifyVideo();
-        }
+      // Inicializamos la captura de video
+      video = createCapture(VIDEO);
+      video.size(320, 240);
+      video.hide(); // ocultamos el elemento HTML del video para dibujarlo en el canvas
 
-        function draw() {
-            background(0);
-            // Draw the video
-            image(flippedVideo, 0, 0);
+      // Invertimos el video para que se vea como espejo
+      flippedVideo = ml5.flipImage(video);
 
-            // Display the top three predictions
-            displayResults();
-        }
+      // Comenzamos la clasificación
+      classifyVideo();
+    }
 
-        // Get a prediction for the current video frame
-        function classifyVideo() {
-            flippedVideo = ml5.flipImage(video);
-            classifier.classify(flippedVideo, gotResult);
-            flippedVideo.remove();
-        }
+    function draw() {
+      background(0);
+      // Dibujamos el video volteado en el canvas
+      image(flippedVideo, 0, 0);
+      // Mostramos los resultados en las barras
+      displayResults();
+    }
 
-        // When we get a result
-        function gotResult(error, resultsArray) {
-            // If there is an error
-            if (error) {
-                console.error(error);
-                return;
-            }
-            // Save the results
-            results = resultsArray;
+    // Función para clasificar cada frame del video
+    function classifyVideo() {
+      flippedVideo = ml5.flipImage(video);
+      classifier.classify(flippedVideo, gotResult);
+      flippedVideo.remove();
+    }
 
-            // Classify again!
-            classifyVideo();
-        }
+    // Función callback cuando obtenemos los resultados de la clasificación
+    function gotResult(error, resultsArray) {
+      if (error) {
+        console.error(error);
+        return;
+      }
+      // Guardamos los resultados en la variable global
+      results = resultsArray;
+      // Volvemos a clasificar
+      classifyVideo();
+    }
 
-        // Function to display results
-        function displayResults() {
-            // If there are results, update the display
-            if (results.length > 0) {
-                // Update the progress bars with the labels and percentages from the results
-                updateProgressBar("barA", results[0] ? results[0].confidence : 0, results[0] ? results[0].label : "N/A", "percentageA");
-                updateProgressBar("barB", results[1] ? results[1].confidence : 0, results[1] ? results[1].label : "N/A", "percentageB");
-                updateProgressBar("barC", results[2] ? results[2].confidence : 0, results[2] ? results[2].label : "N/A", "percentageC");
-            }
-        }
+    // Función para mostrar los resultados
+    function displayResults() {
+      if (results.length > 0) {
+        // Actualizamos las barras para las tres primeras predicciones
+        updateProgressBar("progressBarA", "barLabelA", "percentageA", results[0].confidence, results[0].label);
+        updateProgressBar("progressBarB", "barLabelB", "percentageB", results[1] ? results[1].confidence : 0, results[1] ? results[1].label : "N/A");
+        updateProgressBar("progressBarC", "barLabelC", "percentageC", results[2] ? results[2].confidence : 0, results[2] ? results[2].label : "N/A");
+      }
+    }
 
-        // Function to update the progress bars and display percentages
-        function updateProgressBar(barId, confidence, label, percentageId) {
-            const bar = document.getElementById(barId);
-            const labelElement = document.getElementById('barLabel' + barId.charAt(barId.length - 1));
-            const percentageElement = document.getElementById(percentageId);
-            
-            // Update width and color of the progress bar
-            bar.style.width = Math.round(confidence * 100) + "%";
-            bar.style.backgroundColor = "green";
-            
-            // Update label and percentage text
-            labelElement.innerText = label;
-            percentageElement.innerText = Math.round(confidence * 100) + "%";
-        }
-    </script>
+    // Función que actualiza la barra de progreso, su texto y el porcentaje
+    function updateProgressBar(progressBarId, labelId, percentageId, confidence, label) {
+      // Tomamos los elementos HTML correspondientes
+      const progressBar = document.getElementById(progressBarId);
+      const labelElement = document.getElementById(labelId);
+      const percentageElement = document.getElementById(percentageId);
 
-    <style>
-        .bar-container {
-            display: flex;
-            align-items: center;
-            margin-bottom: 10px;
-        }
+      // Establecemos la anchura de la barra de acuerdo a la confianza
+      const confidencePercent = Math.round(confidence * 100) + "%";
+      progressBar.style.width = confidencePercent;
+      // Podemos cambiar el color si queremos, por ejemplo:
+      progressBar.style.backgroundColor = "#4caf50"; // verde
 
-        .progress-bar {
-            height: 20px;
-            background-color: grey;
-            width: 0;
-            transition: width 0.5s ease-in-out;
-        }
-
-        .bar-container span {
-            width: 80px;  /* Reduced width of the label container */
-            margin-right: 10px;
-        }
-
-        .bar-container #percentageA, .bar-container #percentageB, .bar-container #percentageC {
-            margin-left: 10px;
-            color: lightgreen;
-        }
-    </style>
+      // Actualizamos el texto de la etiqueta y el porcentaje
+      labelElement.innerText = label;
+      percentageElement.innerText = confidencePercent;
+    }
+  </script>
 </body>
 </html>
